@@ -34,6 +34,31 @@ $IsePostureAssetName  = "CiscoISEPosture-Windows.msi"
 
 $ErrorActionPreference = "Stop"
 
+# Older Windows PowerShell (5.1) defaults to TLS 1.0/1.1, which GitHub's
+# servers reject - this is the most common cause of "connection was closed
+# unexpectedly" errors. Force TLS 1.2 before making any web requests.
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+} catch {}
+
+function Invoke-DownloadWithRetry {
+    param(
+        [string]$Uri,
+        [string]$OutFile,
+        [int]$MaxAttempts = 3
+    )
+    for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
+        try {
+            Invoke-WebRequest -Uri $Uri -OutFile $OutFile -UseBasicParsing -TimeoutSec 60
+            return
+        } catch {
+            if ($attempt -eq $MaxAttempts) { throw }
+            Write-Warn "Download attempt $attempt failed, retrying..."
+            Start-Sleep -Seconds 3
+        }
+    }
+}
+
 function Write-Step { param($msg) Write-Host "`n==> $msg" -ForegroundColor Cyan }
 function Write-Ok   { param($msg) Write-Host "    $msg" -ForegroundColor Green }
 function Write-Warn { param($msg) Write-Host "    $msg" -ForegroundColor Yellow }
@@ -98,7 +123,7 @@ if ($alreadyInstalled) {
 
     $downloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$AssetName"
     try {
-        Invoke-WebRequest -Uri $downloadUrl -OutFile $installerPath -UseBasicParsing
+        Invoke-DownloadWithRetry -Uri $downloadUrl -OutFile $installerPath
     } catch {
         Exit-WithMessage "Automatic download failed: $_"
     }
@@ -130,7 +155,7 @@ if ($Audience -eq "Employee") {
 
         $iseDownloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$IsePostureAssetName"
         try {
-            Invoke-WebRequest -Uri $iseDownloadUrl -OutFile $isePath -UseBasicParsing
+            Invoke-DownloadWithRetry -Uri $iseDownloadUrl -OutFile $isePath
         } catch {
             Exit-WithMessage "Automatic download of ISE Posture module failed: $_"
         }
