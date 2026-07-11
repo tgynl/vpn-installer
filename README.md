@@ -1,181 +1,164 @@
-# UCSD VPN Installer Scripts - Setup Guide (for IT/admin)
+# Rady Technology Services - UCSD VPN Installer
 
-These scripts automate the parts of our VPN setup instructions that trip people
-up most: finding the download, running the installer, restarting, and typing
-`vpn.ucsd.edu` correctly. Students/faculty just run one file, then pick a Group
-and log in with Duo.
+This repo installs and sets up the Cisco Secure Client VPN automatically -
+no manual downloads, no typing `vpn.ucsd.edu`, no digging through the KB
+article. Run one command, then finish connecting in the app.
 
-**GitHub repo configured:** `tgynl/vpn-installer` (create this repo before distributing anything).
+---
 
-## Files
+## Installing the VPN
 
-| File | Platform | Audience |
-|---|---|---|
-| `install-ucsd-vpn-student.ps1` + `install-ucsd-vpn-student.cmd` | Windows | Students |
-| `install-ucsd-vpn-employee.ps1` + `install-ucsd-vpn-employee.cmd` | Windows | Employees |
-| `install-ucsd-vpn-student.sh` | macOS | Students |
-| `install-ucsd-vpn-employee.sh` | macOS | Employees |
+### Windows
 
-Each `.cmd` is just a double-click launcher for its matching `.ps1` - always keep them in the same folder.
+Open **PowerShell** (Windows key → type "PowerShell" → Enter), paste the
+command for your role, and press Enter.
 
-## Students vs. employees: ISE Posture
-
-Employees are required to have the Cisco ISE Posture module installed;
-students should **not** have it. That's why there are separate `-student` and
-`-employee` files - each has its `Audience`/`AUDIENCE` setting already set
-correctly, so you just need to distribute the right file to the right group
-(e.g. a student portal page and a staff portal page).
-
-The ISE Posture install step is idempotent and separate from the core client
-check, so if someone's status changes (e.g. a student becomes a TA/employee),
-having them run the `-employee` script will add the missing module without
-touching anything already installed.
-
-> The script's ISE Posture "already installed?" check uses a best-known
-> install path (macOS) / registry lookup (Windows). Cisco's exact layout can
-> shift a little between Secure Client versions, so it's worth confirming
-> this check actually detects a real installed copy before wide distribution
-> - see the `Test-CiscoModuleInstalled` function (Windows) or
-> `is_ise_posture_installed` function (macOS) if you need to adjust it.
-
-## One-time setup before you share these
-
-1. **Create the GitHub repo** `tgynl/vpn-installer` (public is simplest -
-   no auth needed for downloads).
-2. **Create a release tagged `latest`** and upload four installer files to it:
-   - `CiscoSecureClient-Windows.msi` - core VPN module, Windows
-   - `CiscoSecureClient-macOS.pkg` - core VPN module, macOS
-   - `CiscoISEPosture-Windows.msi` - ISE Posture module, Windows (employees only)
-   - `CiscoISEPosture-macOS.pkg` - ISE Posture module, macOS (employees only)
-
-   GitHub gives release assets a permanent alias URL that always points at
-   whatever file currently has that name under the `latest` tag - that's what
-   makes monthly updates painless (see below).
-
-3. **Test all four combinations** (Windows student, Windows employee, Mac
-   student, Mac employee) on a clean (or VM) machine before distributing.
-   Specifically confirm the student copy does *not* end up with ISE Posture
-   installed, and the employee copy does.
-
-## Monthly update process (when Cisco ships a new client)
-
-1. Go to your GitHub repo → Releases → the `latest` release.
-2. Delete the old asset(s) - core client and/or ISE Posture, whichever changed.
-3. Upload the new installer(s) with the **exact same filenames** as before.
-
-That's it - no script edits, no link swapping, no re-signing. The download
-URLs in both scripts always resolve to whatever file is currently attached to
-that tag.
-
-If your VPN gateway supports pushing client updates to already-installed
-users automatically, this monthly step mostly only matters for *new* installs
-- worth confirming with whoever manages the VPN headend.
-
-## Copy-paste one-liner distribution (recommended for end users)
-
-Instead of asking people to download and run a `.ps1`/`.sh`/`.cmd` file, you
-can post these one-liners on an internal page (e.g. an internal-only staff
-site) for people to copy-paste into PowerShell or Terminal directly:
-
-**Windows, Employee:**
+**Employees:**
 ```
 irm https://raw.githubusercontent.com/tgynl/vpn-installer/main/install-ucsd-vpn-employee.ps1 | iex
 ```
-**Windows, Student:**
+
+**Students:**
 ```
 irm https://raw.githubusercontent.com/tgynl/vpn-installer/main/install-ucsd-vpn-student.ps1 | iex
 ```
-**macOS, Employee:**
+
+A second window will pop up asking for admin permission (UAC) - click **Yes**.
+The first window closes once that happens; the real progress shows in the new
+elevated window.
+
+### macOS
+
+Open **Terminal**, paste the command for your role, and press Enter.
+
+**Employees:**
 ```
 curl -fsSL https://raw.githubusercontent.com/tgynl/vpn-installer/main/install-ucsd-vpn-employee.sh | bash
 ```
-**macOS, Student:**
+
+**Students:**
 ```
 curl -fsSL https://raw.githubusercontent.com/tgynl/vpn-installer/main/install-ucsd-vpn-student.sh | bash
 ```
 
-**Setup required for this to work:** the four script files
-(`install-ucsd-vpn-employee.ps1`, `install-ucsd-vpn-student.ps1`,
-`install-ucsd-vpn-employee.sh`, `install-ucsd-vpn-student.sh`) must be
-committed to the repo's **`main` branch** (via Add file → Upload files) - this
-is separate and independent from the Release that holds the `.msi`/`.pkg`
-installers. `raw.githubusercontent.com` only serves files tracked in the
-branch file tree, not Release assets.
+It will ask for your Mac password partway through - that's expected, it's
+needed to install software. If macOS blocks the download as "from an
+unidentified developer," right-click the downloaded file and choose **Open**
+instead of double-clicking it.
 
-**Why `main` branch instead of Release assets:** Release assets could also be
-fetched this way (via `/releases/latest/download/{filename}`), but that URL
-always points at whichever release is currently tagged "latest." If a future
-release only re-attaches the updated `.msi`/`.pkg` and forgets to re-attach
-the scripts, the one-liners would 404 even though the scripts themselves
-didn't change. Committing the scripts to `main` decouples them entirely from
-the installer release cycle - you only touch them when the script logic
-itself changes.
+### What happens when you run it
 
-**Updating the scripts later:** just re-upload the changed file to `main`
-with the identical filename, overwriting the old version. No new release,
-tag, or link changes needed - the one-liners above always pull whatever is
-currently on `main`.
+1. Installs Cisco Secure Client (skipped automatically if already installed).
+2. Employees only: installs the ISE Posture module, which is required for
+   employees and not installed for students.
+3. Sets up `vpn.ucsd.edu` so it's ready to go in the app - no typing required.
+4. Opens Cisco Secure Client.
 
-**Windows elevation note:** each script self-elevates (UAC prompt) - when run
-via `irm | iex` there's no local file to relaunch, so the script instead
-re-fetches and re-runs itself from `$ScriptUrl` (set near the top of each
-`.ps1`) in a new elevated window. Keep `$ScriptUrl` pointed at the correct
-raw GitHub URL for that copy of the script if you ever rename files or move
-repos.
+### Finishing the connection
 
-**Trust note:** anyone with push access to `main` can control what this
-one-liner executes with admin/sudo rights on every machine that runs it going
-forward - treat write access to this repo like any other admin credential.
+Once the app opens:
 
+1. Pick **`vpn.ucsd.edu`** from the list, and click **Connect**.
+2. Choose your Group (**secure-connect-allthru** or **secure-connect-split**)
+   and log in with your Active Directory username and password.
+3. Approve the Duo two-step login prompt on your phone (required).
+4. Employees only: you may briefly see an ISE Posture compliance check
+   window after connecting - this is expected.
 
+---
 
-- **Windows users**: give students `install-ucsd-vpn-student.ps1` +
-  `install-ucsd-vpn-student.cmd` (same folder), and give employees
-  `install-ucsd-vpn-employee.ps1` + `install-ucsd-vpn-employee.cmd`. Tell them
-  to double-click the `.cmd` file. It will prompt for admin approval (UAC) -
-  that's expected.
-- **macOS users**: give students `install-ucsd-vpn-student.sh` and employees
-  `install-ucsd-vpn-employee.sh`. Tell them to open Terminal, `cd` to the
-  folder it's in, and run e.g. `./install-ucsd-vpn-student.sh`. It will ask
-  for their Mac password (that's `sudo`, needed to install software).
-  - If macOS blocks it as "from an unidentified developer," they can instead
-    right-click the file → **Open**, or run `chmod +x install-ucsd-vpn-student.sh` first.
+## About this repo
 
-## What each script does, step by step
+This repo has two independent parts:
 
-1. Checks whether Cisco Secure Client is already installed - if so, skips
-   straight to the next step so re-runs are harmless.
-2. Downloads the installer from your GitHub Release and installs it
-   silently (no click-through wizard).
-3. **Employee copies only:** checks whether the ISE Posture module is already
-   installed, and if not, downloads and installs it too. Student copies skip
-   this entirely.
-4. Writes a small connection profile so `vpn.ucsd.edu` shows up automatically
-   in the client - no typing required.
-5. Launches Cisco Secure Client. The user's only remaining steps are picking
-   their Group (e.g. `2-Step Secured - allthruucsd`) and logging in with their
-   AD username/password + Duo.
+- **Releases** hold the Cisco installer binaries (`.msi`/`.pkg` for the core
+  VPN client and the ISE Posture module). The scripts always download
+  whichever files are attached to the release tagged **`latest`**.
+- **The `main` branch** holds the installer scripts themselves
+  (`install-ucsd-vpn-employee.ps1`, `install-ucsd-vpn-student.ps1`,
+  `install-ucsd-vpn-employee.sh`, `install-ucsd-vpn-student.sh`, plus `.cmd`
+  double-click launchers for Windows). `raw.githubusercontent.com` serves
+  files from here, which is what the copy-paste commands above pull from.
 
-## Known limitations / things to watch
+Keeping these separate means a monthly installer update never touches the
+scripts, and a script change never touches the installer files.
 
-- **Group selection isn't pre-set.** The Group dropdown is populated by the
-  VPN server itself after the host is selected, so we can't safely hardcode
-  which group (split vs. allthruucsd vs. 2-Step variants) every user should
-  pick - that depends on what they're doing. If your users are overwhelmingly
-  one profile, let me know and I can look at whether it's safe to default it.
-- **Public repo means the installers are downloadable by anyone with the
-  URL**, same as the Google Drive link would have been. If that's a concern,
-  use a private repo instead, but note that raw/asset downloads from a private
-  repo require an authenticated request (a GitHub token), which adds a step
-  for every user - most schools find a public repo an acceptable tradeoff for
-  something that's just a VPN client installer.
+### Students vs. employees: ISE Posture
+
+Employees are required to have the Cisco ISE Posture module installed;
+students should not have it. That's why there are separate `-student` and
+`-employee` scripts, each with its audience already set correctly. The ISE
+Posture install step is idempotent and independent of the core client check,
+so if someone's status changes (e.g. a student becomes a TA/employee),
+running the `-employee` script adds the missing module without touching
+anything already installed.
+
+> The "is ISE Posture already installed?" check relies on a best-known
+> install path (macOS) / registry lookup (Windows). Cisco's exact layout can
+> shift a little between Secure Client versions, so this is worth confirming
+> against a real installed copy after any Cisco version update - see the
+> `Test-CiscoModuleInstalled` function (Windows) or `is_ise_posture_installed`
+> function (macOS) if it ever needs adjusting.
+
+### Monthly updates (new Cisco Secure Client version)
+
+Installer files live in the release tagged `latest`. When Cisco ships a new
+version, the outdated asset - core client and/or ISE Posture, whichever
+changed - gets deleted from that release, and the new installer is uploaded
+in its place under the **exact same filename** as before. Nothing else
+changes: no script edits, no link swapping, no re-signing. The download URLs
+in the scripts always resolve to whatever file is currently attached to the
+`latest` tag.
+
+If the VPN gateway supports pushing client updates to already-installed users
+automatically, this step mostly only matters for new installs - worth
+confirming with whoever manages the VPN headend.
+
+### Updating the scripts themselves
+
+Separately from installer updates, if the script logic changes (not the
+Cisco installer, the `.ps1`/`.sh` code), the changed file gets re-uploaded to
+the `main` branch with the identical filename, overwriting the old version.
+No new release, tag, or link changes needed - the copy-paste commands always
+pull whatever is currently on `main`.
+
+### One-time setup (already done for this repo)
+
+1. Create the GitHub repo (public, so downloads don't require
+   authentication).
+2. Create a release tagged `latest` and attach four installer files to it:
+   - `CiscoSecureClient-Windows.msi` - core VPN module, Windows
+   - `CiscoSecureClient-macOS.pkg` - core VPN module, macOS
+   - `CiscoISEPosture-Windows.msi` - ISE Posture module, Windows (employees only)
+   - `CiscoISEPosture-macOS.pkg` - ISE Posture module, macOS (employees only)
+3. Commit the four scripts to `main`
+   (`install-ucsd-vpn-employee.ps1`, `install-ucsd-vpn-student.ps1`,
+   `install-ucsd-vpn-employee.sh`, `install-ucsd-vpn-student.sh`).
+4. Test all four combinations (Windows employee/student, Mac
+   employee/student) on a clean machine, confirming the student copy does
+   *not* end up with ISE Posture installed and the employee copy does.
+
+### Windows elevation, technical note
+
+Each script self-elevates (UAC prompt). When run via `irm | iex` there's no
+local file to relaunch, so the script instead re-fetches and re-runs itself
+from `$ScriptUrl` (set near the top of each `.ps1`) in a new elevated window.
+`$ScriptUrl` needs to stay pointed at the correct raw GitHub URL for that copy
+of the script if it's ever renamed or moved to a different repo.
+
+### Known limitations
+
+- **The repo is public**, meaning the installers and scripts are downloadable
+  by anyone with the URL. Using a private repo instead would require an
+  authenticated request (a GitHub token) for every download, adding a step
+  for every user - a public repo is usually an acceptable tradeoff for a VPN
+  client installer.
 - **Windows execution policy**: the `.cmd` wrapper runs the `.ps1` with
   `-ExecutionPolicy Bypass` for that one run only - it does not change any
   permanent system setting.
-- **Re-running is safe**: both scripts skip the install step if the client is
-  already present, and just re-apply the connection profile and relaunch.
-
-## Updating for a new Cisco Secure Client version
-
-See "Monthly update process" above - just replace the release asset, keeping
-the filename identical. No script changes needed.
+- **Re-running is safe**: the scripts skip the install step(s) if already
+  present, and just re-apply the connection profile and relaunch.
+- **Trust boundary**: anyone with push access to `main` can control what the
+  copy-paste commands execute with admin/sudo rights on every machine that
+  runs them going forward - write access to this repo should be treated like
+  any other admin credential.
