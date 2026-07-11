@@ -23,6 +23,8 @@
 $GitHubRepo      = "tgynl/vpn-installer"
 # The exact filename you upload as a release asset each month - keep this identical every time
 $AssetName       = "CiscoSecureClient-Windows.msi"
+# ARM64 build of the same installer - used automatically on ARM64 Windows devices
+$AssetNameArm64  = "CiscoSecureClient-Windows-ARM64.msi"
 $VpnServer       = "vpn.ucsd.edu"
 $VpnDisplayName  = "vpn.ucsd.edu"
 $VpnGroup        = "secure-connect-allthru"
@@ -35,12 +37,26 @@ $ScriptUrl       = "https://raw.githubusercontent.com/tgynl/vpn-installer/main/i
 # IT ADMIN: distribute two copies of this script - one with this set to "Student", one to "Employee".
 $Audience             = "Employee"   # "Student" or "Employee"
 $IsePostureAssetName  = "CiscoISEPosture-Windows.msi"
+# ARM64 build of the ISE Posture module - used automatically on ARM64 Windows devices
+$IsePostureAssetNameArm64 = "CiscoISEPosture-Windows-ARM64.msi"
 # ====================================================================
 
 $ErrorActionPreference = "Stop"
 
 Write-Host "Rady Technology Services - Cisco Secure Client Installer" -ForegroundColor Cyan
 Write-Host ""
+
+# --- Detect architecture and pick the matching installer files ---
+# PROCESSOR_ARCHITEW6432 is set when the current process is running under
+# WOW64 emulation (e.g. an x86/x64 PowerShell on an ARM64 machine) and holds
+# the TRUE native architecture in that case - check it first.
+$detectedArch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+$IsArm64 = ($detectedArch -eq "ARM64")
+
+$EffectiveAssetName = if ($IsArm64) { $AssetNameArm64 } else { $AssetName }
+$EffectiveIsePostureAssetName = if ($IsArm64) { $IsePostureAssetNameArm64 } else { $IsePostureAssetName }
+
+Write-Host "Detected architecture: $detectedArch" -ForegroundColor Cyan
 
 # Older Windows PowerShell (5.1) defaults to TLS 1.0/1.1, which GitHub's
 # servers reject - this is the most common cause of "connection was closed
@@ -173,9 +189,9 @@ if ($alreadyInstalled) {
     Write-Step "Downloading the Cisco Secure Client installer"
     $tempDir = Join-Path $Env:TEMP "ucsd-vpn-install"
     New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-    $installerPath = Join-Path $tempDir $AssetName
+    $installerPath = Join-Path $tempDir $EffectiveAssetName
 
-    $downloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$AssetName"
+    $downloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$EffectiveAssetName"
     try {
         Invoke-DownloadWithRetry -Uri $downloadUrl -OutFile $installerPath
     } catch {
@@ -205,9 +221,9 @@ if ($Audience -eq "Employee") {
         Write-Step "Downloading the ISE Posture module"
         $tempDir = Join-Path $Env:TEMP "ucsd-vpn-install"
         New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        $isePath = Join-Path $tempDir $IsePostureAssetName
+        $isePath = Join-Path $tempDir $EffectiveIsePostureAssetName
 
-        $iseDownloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$IsePostureAssetName"
+        $iseDownloadUrl = "https://github.com/$GitHubRepo/releases/latest/download/$EffectiveIsePostureAssetName"
         try {
             Invoke-DownloadWithRetry -Uri $iseDownloadUrl -OutFile $isePath
         } catch {
