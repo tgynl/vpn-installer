@@ -72,8 +72,9 @@ Once the app opens:
 This repo has two independent parts:
 
 - **Releases** hold the Cisco installer binaries (`.msi`/`.pkg` for the core
-  VPN client and the ISE Posture module). The scripts always download
-  whichever files are attached to the release tagged **`latest`**.
+  VPN client and the ISE Posture module, in both x64 and ARM64 builds for
+  Windows). The scripts always download whichever files are attached to the
+  release tagged **`latest`**.
 - **The `main` branch** holds the installer scripts themselves
   (`install-ucsd-vpn-employee.ps1`, `install-ucsd-vpn-student.ps1`,
   `install-ucsd-vpn-employee.sh`, `install-ucsd-vpn-student.sh`, plus `.cmd`
@@ -100,15 +101,24 @@ anything already installed.
 > `Test-CiscoModuleInstalled` function (Windows) or `is_ise_posture_installed`
 > function (macOS) if it ever needs adjusting.
 
+### Windows: x64 vs. ARM64
+
+Both Windows scripts detect the device's processor architecture automatically
+and download the matching installer - x64 or ARM64 - for both the core
+client and, for employees, the ISE Posture module. This is fully automatic;
+there's no separate command or link for ARM64 devices, and nothing changes
+for the person running the script. The detected architecture is printed at
+the top of the script's output for troubleshooting.
+
 ### Monthly updates (new Cisco Secure Client version)
 
 Installer files live in the release tagged `latest`. When Cisco ships a new
-version, the outdated asset - core client and/or ISE Posture, whichever
-changed - gets deleted from that release, and the new installer is uploaded
-in its place under the **exact same filename** as before. Nothing else
-changes: no script edits, no link swapping, no re-signing. The download URLs
-in the scripts always resolve to whatever file is currently attached to the
-`latest` tag.
+version, the outdated asset - core client and/or ISE Posture, x64 and/or
+ARM64, whichever changed - gets deleted from that release, and the new
+installer is uploaded in its place under the **exact same filename** as
+before. Nothing else changes: no script edits, no link swapping, no
+re-signing. The download URLs in the scripts always resolve to whatever file
+is currently attached to the `latest` tag.
 
 If the VPN gateway supports pushing client updates to already-installed users
 automatically, this step mostly only matters for new installs - worth
@@ -126,17 +136,20 @@ pull whatever is currently on `main`.
 
 1. Create the GitHub repo (public, so downloads don't require
    authentication).
-2. Create a release tagged `latest` and attach four installer files to it:
-   - `CiscoSecureClient-Windows.msi` - core VPN module, Windows
+2. Create a release tagged `latest` and attach six installer files to it:
+   - `CiscoSecureClient-Windows.msi` - core VPN module, Windows (x64)
+   - `CiscoSecureClient-Windows-ARM64.msi` - core VPN module, Windows (ARM64)
    - `CiscoSecureClient-macOS.pkg` - core VPN module, macOS
-   - `CiscoISEPosture-Windows.msi` - ISE Posture module, Windows (employees only)
+   - `CiscoISEPosture-Windows.msi` - ISE Posture module, Windows (x64, employees only)
+   - `CiscoISEPosture-Windows-ARM64.msi` - ISE Posture module, Windows (ARM64, employees only)
    - `CiscoISEPosture-macOS.pkg` - ISE Posture module, macOS (employees only)
 3. Commit the four scripts to `main`
    (`install-ucsd-vpn-employee.ps1`, `install-ucsd-vpn-student.ps1`,
    `install-ucsd-vpn-employee.sh`, `install-ucsd-vpn-student.sh`).
-4. Test all four combinations (Windows employee/student, Mac
-   employee/student) on a clean machine, confirming the student copy does
-   *not* end up with ISE Posture installed and the employee copy does.
+4. Test all combinations (Windows x64 employee/student, Windows ARM64
+   employee/student, Mac employee/student) on a clean machine, confirming the
+   student copy does *not* end up with ISE Posture installed and the
+   employee copy does.
 
 ### Windows elevation, technical note
 
