@@ -135,9 +135,10 @@ ok "Connection profile written to $PROFILE_PATH"
 step "Launching Cisco Secure Client"
 open -a "Cisco Secure Client"
 
-echo -e "\n${BLUE}All done! In the Cisco Secure Client window, pick '${VPN_DISPLAY_NAME}' from the list,${NC}"
-echo -e "${BLUE}then choose your Group and log in with your Active Directory username and password.${NC}"
-echo -e "${BLUE}If you use Duo two-step login, approve the prompt on your phone when asked.${NC}"
+echo -e "\n${BLUE}All done! Just a few steps left:${NC}"
+echo -e "${BLUE}  1. In the Cisco Secure Client window, pick '${VPN_DISPLAY_NAME}' from the list.${NC}"
+echo -e "${BLUE}  2. Choose your Group and log in with your Active Directory username and password.${NC}"
+echo -e "${BLUE}  3. Approve the Duo two-step login prompt on your phone (required).${NC}"
 if [ "$AUDIENCE" = "employee" ]; then
-  echo -e "${BLUE}You may briefly see an ISE Posture compliance check window after connecting - this is expected.${NC}"
+  echo -e "${BLUE}  4. You may briefly see an ISE Posture compliance check window after connecting - this is expected.${NC}"
 fi

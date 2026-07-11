@@ -280,10 +280,11 @@ if ($vpnui) {
     Write-Warn "Installed successfully, but couldn't locate the Cisco Secure Client GUI to launch it automatically. Please open 'Cisco Secure Client' from the Start Menu."
 }
 
-Write-Host "`nAll done! In the Cisco Secure Client window, pick '$VpnDisplayName' from the list," -ForegroundColor Cyan
-Write-Host "then choose your Group and log in with your Active Directory username and password." -ForegroundColor Cyan
-Write-Host "If you use Duo two-step login, approve the prompt on your phone when asked." -ForegroundColor Cyan
+Write-Host "`nAll done! Just a few steps left:" -ForegroundColor Cyan
+Write-Host "  1. In the Cisco Secure Client window, pick '$VpnDisplayName' from the list." -ForegroundColor Cyan
+Write-Host "  2. Choose your Group and log in with your Active Directory username and password." -ForegroundColor Cyan
+Write-Host "  3. Approve the Duo two-step login prompt on your phone (required)." -ForegroundColor Cyan
 if ($Audience -eq "Employee") {
-    Write-Host "You may briefly see an ISE Posture compliance check window after connecting - this is expected." -ForegroundColor Cyan
+    Write-Host "  4. You may briefly see an ISE Posture compliance check window after connecting - this is expected." -ForegroundColor Cyan
 }
 Read-Host "`nPress Enter to close this window"
