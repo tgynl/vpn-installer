@@ -24,7 +24,7 @@ GITHUB_REPO="tgynl/vpn-installer"
 ASSET_NAME="CiscoSecureClient-macOS.pkg"
 VPN_SERVER="vpn.ucsd.edu"
 VPN_DISPLAY_NAME="vpn.ucsd.edu"
-VPN_GROUP="Secure-Connect-Allthru"
+VPN_GROUP="secure-connect-allthru"
 
 # Who is this copy of the script for? "student" = core VPN only. "employee" = VPN + ISE Posture.
 # IT ADMIN: distribute two copies of this script - one with this set to "student", one to "employee".
@@ -37,6 +37,9 @@ step() { echo -e "\n${BLUE}==> $1${NC}"; }
 ok()   { echo -e "    ${GREEN}$1${NC}"; }
 warn() { echo -e "    ${YELLOW}$1${NC}"; }
 fail() { echo -e "    ${RED}$1${NC}"; }
+
+echo -e "${BLUE}Rady Technology Services - Cisco Secure Client Installer${NC}"
+echo ""
 
 exit_with_message() {
   fail "$1"
@@ -135,9 +138,10 @@ ok "Connection profile written to $PROFILE_PATH"
 step "Launching Cisco Secure Client"
 open -a "Cisco Secure Client"
 
-echo -e "\n${BLUE}All done! Just a few steps left:${NC}"
+echo -e "\n${BLUE}Installed! To finish connecting, do the following:${NC}"
+echo -e ""
 echo -e "${BLUE}  1. In the Cisco Secure Client window, pick '${VPN_DISPLAY_NAME}' from the list.${NC}"
-echo -e "${BLUE}  2. Choose your Group and log in with your Active Directory username and password.${NC}"
+echo -e "${BLUE}  2. Choose your Group (secure-connect-allthru or secure-connect-split) and log in with your Active Directory username and password.${NC}"
 echo -e "${BLUE}  3. Approve the Duo two-step login prompt on your phone (required).${NC}"
 if [ "$AUDIENCE" = "employee" ]; then
   echo -e "${BLUE}  4. You may briefly see an ISE Posture compliance check window after connecting - this is expected.${NC}"

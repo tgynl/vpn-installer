@@ -25,7 +25,7 @@ $GitHubRepo      = "tgynl/vpn-installer"
 $AssetName       = "CiscoSecureClient-Windows.msi"
 $VpnServer       = "vpn.ucsd.edu"
 $VpnDisplayName  = "vpn.ucsd.edu"
-$VpnGroup        = "Secure-Connect-Allthru"
+$VpnGroup        = "secure-connect-allthru"
 # This script's own raw GitHub URL - only needed if you distribute it as a
 # copy-paste "irm ... | iex" one-liner instead of a downloaded .ps1 file.
 # Leave blank ("") if people always download and run the .ps1 directly.
@@ -38,6 +38,9 @@ $IsePostureAssetName  = "CiscoISEPosture-Windows.msi"
 # ====================================================================
 
 $ErrorActionPreference = "Stop"
+
+Write-Host "Rady Technology Services - Cisco Secure Client Installer" -ForegroundColor Cyan
+Write-Host ""
 
 # Older Windows PowerShell (5.1) defaults to TLS 1.0/1.1, which GitHub's
 # servers reject - this is the most common cause of "connection was closed
@@ -280,9 +283,10 @@ if ($vpnui) {
     Write-Warn "Installed successfully, but couldn't locate the Cisco Secure Client GUI to launch it automatically. Please open 'Cisco Secure Client' from the Start Menu."
 }
 
-Write-Host "`nAll done! Just a few steps left:" -ForegroundColor Cyan
+Write-Host "`nInstalled! To finish connecting, do the following:" -ForegroundColor Cyan
+Write-Host "" -ForegroundColor Cyan
 Write-Host "  1. In the Cisco Secure Client window, pick '$VpnDisplayName' from the list." -ForegroundColor Cyan
-Write-Host "  2. Choose your Group and log in with your Active Directory username and password." -ForegroundColor Cyan
+Write-Host "  2. Choose your Group (secure-connect-allthru or secure-connect-split) and log in with your Active Directory username and password." -ForegroundColor Cyan
 Write-Host "  3. Approve the Duo two-step login prompt on your phone (required)." -ForegroundColor Cyan
 if ($Audience -eq "Employee") {
     Write-Host "  4. You may briefly see an ISE Posture compliance check window after connecting - this is expected." -ForegroundColor Cyan
