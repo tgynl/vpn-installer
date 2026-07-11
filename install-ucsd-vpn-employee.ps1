@@ -26,6 +26,10 @@ $AssetName       = "CiscoSecureClient-Windows.msi"
 $VpnServer       = "vpn.ucsd.edu"
 $VpnDisplayName  = "vpn.ucsd.edu"
 $VpnGroup        = "Secure-Connect-Allthru"
+# This script's own raw GitHub URL - only needed if you distribute it as a
+# copy-paste "irm ... | iex" one-liner instead of a downloaded .ps1 file.
+# Leave blank ("") if people always download and run the .ps1 directly.
+$ScriptUrl       = "https://raw.githubusercontent.com/tgynl/vpn-installer/main/install-ucsd-vpn-employee.ps1"
 
 # Who is this copy of the script for? "Student" = core VPN only. "Employee" = VPN + ISE Posture.
 # IT ADMIN: distribute two copies of this script - one with this set to "Student", one to "Employee".
@@ -126,7 +130,30 @@ $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal   = New-Object Security.Principal.WindowsPrincipal($currentUser)
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Write-Warn "Administrator rights are required. Relaunching with elevation..."
-    $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    if ($PSCommandPath) {
+        # Running as a downloaded .ps1 file - relaunch that same file elevated.
+        $argList = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`""
+    } else {
+        # Running via "irm <url> | iex" - there's no local file to relaunch,
+        # so re-fetch and re-run the same script in a new elevated window.
+        if (-not $ScriptUrl) {
+            Exit-WithMessage "This script needs Administrator rights, but it was run via 'irm | iex' without `$ScriptUrl set, so it can't relaunch itself elevated. Either set `$ScriptUrl in the CONFIG block, or run this as a downloaded .ps1 file instead."
+        }
+        try {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+        } catch {}
+        # The TLS setting above only applies to THIS process, not the new
+        # elevated one we're about to spawn - so it needs to be set again
+        # inside the relaunched command. Also wrap in try/catch so a failure
+        # in the outer fetch (network, TLS, 404) shows an error and pauses,
+        # instead of the elevated window flashing and closing instantly.
+        # Built from a single-quoted template (no PowerShell interpolation at
+        # all) with the URL swapped in afterward - avoids fragile backtick
+        # escaping when embedding this as a command-line argument.
+        $innerTemplate = 'try { [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12; irm ''__URL__'' | iex } catch { Write-Host $_.Exception.Message -ForegroundColor Red; Read-Host ''Press Enter to close this window'' }'
+        $command = $innerTemplate.Replace('__URL__', $ScriptUrl)
+        $argList = "-NoProfile -ExecutionPolicy Bypass -Command `"$command`""
+    }
     Start-Process powershell -Verb RunAs -ArgumentList $argList
     exit
 }
