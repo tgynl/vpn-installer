@@ -283,9 +283,9 @@ if ($vpnui) {
     Write-Warn "Installed successfully, but couldn't locate the Cisco Secure Client GUI to launch it automatically. Please open 'Cisco Secure Client' from the Start Menu."
 }
 
-Write-Host "`nInstalled! To finish connecting, do the following:" -ForegroundColor Cyan
+Write-Host "`nDone! To finish connecting, do the following:" -ForegroundColor Cyan
 Write-Host "" -ForegroundColor Cyan
-Write-Host "  1. In the Cisco Secure Client window, pick '$VpnDisplayName' from the list." -ForegroundColor Cyan
+Write-Host "  1. In the Cisco Secure Client window, pick '$VpnDisplayName' from the list, and click on 'Connect'." -ForegroundColor Cyan
 Write-Host "  2. Choose your Group (secure-connect-allthru or secure-connect-split) and log in with your Active Directory username and password." -ForegroundColor Cyan
 Write-Host "  3. Approve the Duo two-step login prompt on your phone (required)." -ForegroundColor Cyan
 if ($Audience -eq "Employee") {

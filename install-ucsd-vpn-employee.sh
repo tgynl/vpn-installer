@@ -138,9 +138,9 @@ ok "Connection profile written to $PROFILE_PATH"
 step "Launching Cisco Secure Client"
 open -a "Cisco Secure Client"
 
-echo -e "\n${BLUE}Installed! To finish connecting, do the following:${NC}"
+echo -e "\n${BLUE}Done! To finish connecting, do the following:${NC}"
 echo -e ""
-echo -e "${BLUE}  1. In the Cisco Secure Client window, pick '${VPN_DISPLAY_NAME}' from the list.${NC}"
+echo -e "${BLUE}  1. In the Cisco Secure Client window, pick '${VPN_DISPLAY_NAME}' from the list, and click on 'Connect'.${NC}"
 echo -e "${BLUE}  2. Choose your Group (secure-connect-allthru or secure-connect-split) and log in with your Active Directory username and password.${NC}"
 echo -e "${BLUE}  3. Approve the Duo two-step login prompt on your phone (required).${NC}"
 if [ "$AUDIENCE" = "employee" ]; then
