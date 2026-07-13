@@ -34,7 +34,10 @@ GITHUB_REPO="tgynl/vpn-installer"
 ASSET_NAME="CiscoSecureClient-macOS.dmg"
 VPN_SERVER="vpn.ucsd.edu"
 VPN_DISPLAY_NAME="vpn.ucsd.edu"
-VPN_GROUP="secure-connect-allthru"
+# NOTE: unlike Windows, macOS does not write a <UserGroup> into the profile.
+# Testing showed the macOS client's connection was refused by the server
+# when <UserGroup> was present - removing it fixed the connection. Users
+# pick their Group manually from the dropdown in the app on macOS instead.
 
 # Who is this copy of the script for? "student" = core VPN only. "employee" = VPN + ISE Posture.
 # IT ADMIN: distribute two copies of this script - one with this set to "student", one to "employee".
@@ -113,6 +116,11 @@ ok "Found $PKG_PATH"
 # Everything else this package bundles by default - DART, Secure Firewall
 # Posture, NVM, Umbrella, ThousandEyes, Duo, ZTA - is explicitly excluded to
 # match the Windows deployment's footprint.
+#
+# NOTE: testing showed ISE Posture reports "Service is unavailable" in the
+# client UI without Secure Firewall Posture also installed (the two modules
+# appear to share an underlying posture engine) - this is a known open
+# question, still being decided, not yet resolved in this script.
 if [ "$AUDIENCE" = "employee" ]; then
   ISE_SELECTED=1
 else
@@ -234,7 +242,10 @@ sudo tee "$PROFILE_PATH" > /dev/null <<XML
     <HostEntry>
       <HostName>${VPN_DISPLAY_NAME}</HostName>
       <HostAddress>${VPN_SERVER}</HostAddress>
-      <UserGroup>${VPN_GROUP}</UserGroup>
+      <BackupServerList>
+        <HostAddress>vpn-1.ucsd.edu</HostAddress>
+        <HostAddress>vpn-2.ucsd.edu</HostAddress>
+      </BackupServerList>
     </HostEntry>
   </ServerList>
 </AnyConnectProfile>
