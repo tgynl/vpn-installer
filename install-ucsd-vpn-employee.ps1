@@ -272,6 +272,22 @@ $profileXml = @"
 Set-Content -Path $profilePath -Value $profileXml -Encoding UTF8
 Write-Ok "Connection profile written to $profilePath"
 
+# Some Cisco installers (notably ARM64 builds observed in testing) ship with
+# their own pre-configured default profile XML in this same folder, which can
+# override which Group shows as pre-selected. Cisco Secure Client merges
+# every .xml file in this directory, so remove anything that isn't ours to
+# make sure our profile is the only one - and therefore authoritative.
+Get-ChildItem -Path $profileDir -Filter "*.xml" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne (Split-Path $profilePath -Leaf) } |
+    ForEach-Object {
+        try {
+            Remove-Item $_.FullName -Force
+            Write-Ok "Removed a conflicting bundled profile: $($_.Name)"
+        } catch {
+            Write-Warn "Could not remove conflicting profile $($_.Name): $($_.Exception.Message)"
+        }
+    }
+
 # --- Launch the client ---
 Write-Step "Launching Cisco Secure Client"
 # The GUI executable's name has changed across Cisco Secure Client versions
